@@ -2,14 +2,16 @@
 members = [
     "defiance-core",           # Core P2P streaming and network functionality
     "defiance-audigy",         # Audigy audio streaming component
-    # "defiance-ui", # Temporarily disabled for compilation            # Renaissance/eco-friendly UI framework
     "defiance-bridge",         # Cryptocurrency bridge (Paradigm, Arceon, etc.)
     "defiance-mobile",         # Mobile platform support (Android/iOS)
     "defiance-web",            # Web application interface
     "defiance-cast",           # Chromecast and device casting support
-    # "defiance-ml", # Temporarily disabled for compilation             # ML optimization and network intelligence
     "defiance-discovery",      # Peer discovery and network bootstrapping
     "integration-tests",       # Integration tests for the platform
+]
+exclude = [
+    "defiance-ui",            # Temporarily disabled due to compilation errors
+    "defiance-ml",            # Temporarily disabled due to missing dependencies
 ]
 resolver = "2"
 

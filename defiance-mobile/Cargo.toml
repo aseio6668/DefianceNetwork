@@ -21,7 +21,7 @@ uuid = { workspace = true }
 
 # Local workspace dependencies
 defiance-core = { path = "../defiance-core" }
-defiance-ui = { path = "../defiance-ui" }
+# defiance-ui = { path = "../defiance-ui" } # Temporarily disabled
 defiance-audigy = { path = "../defiance-audigy" }
 defiance-cast = { path = "../defiance-cast" }
 
