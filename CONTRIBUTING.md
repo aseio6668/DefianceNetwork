@@ -172,9 +172,9 @@ Brief description of the changes
 - Include comprehensive error handling
 
 ### UI Framework (`defiance-ui`)
-- Maintain eco-friendly design principles
+- Maintain eco-friendly design principles with nature-inspired aesthetics
 - Ensure accessibility compliance
-- Test on different screen sizes
+- Test on different screen sizes and platforms
 
 ## 🐞 Bug Triage Process
 

@@ -92,12 +92,12 @@ pub struct BridgeManager {
 
 ### Specialized Modules
 
-#### 4. defiance-ui (Renaissance Framework)
+#### 4. defiance-ui (Native UI Framework)
 **Design philosophy**: Eco-friendly, nature-inspired interface
 
 ```rust
 // UI component structure
-pub struct RenaissanceTheme {
+pub struct EcoTheme {
     colors: EcoColorPalette,     // Earth tones, greens
     typography: ClassicFonts,    // Serif headers, clean body
     components: OrganicShapes,   // Rounded, flowing design

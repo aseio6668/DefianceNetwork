@@ -206,8 +206,8 @@ cargo deny check
 
 ## 🎨 User Interface
 
-### Renaissance Theme
-The DefianceNetwork UI uses an eco-friendly "Renaissance" theme:
+### Eco-Friendly Theme
+The DefianceNetwork UI uses an eco-friendly design aesthetic:
 
 - **Colors**: Earth tones, forest greens, warm golds
 - **Typography**: Classic serif fonts for headers
@@ -252,7 +252,7 @@ default_network = "paradigm"
 auto_confirm = false
 
 [ui]
-theme = "renaissance-light"
+theme = "eco-light"
 minimize_to_tray = true
 show_notifications = true
 ```
