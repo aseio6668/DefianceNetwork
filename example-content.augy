@@ -1,0 +1,171 @@
+{
+  "version": "1.0",
+  "metadata": {
+    "title": "DefianceNetwork Educational Content Collection",
+    "description": "A curated collection of educational podcasts, lectures, and audiobooks for the DefianceNetwork community",
+    "creator": "DefianceNetwork Community",
+    "created_at": "2024-08-19T18:00:00Z",
+    "updated_at": "2024-08-19T18:00:00Z",
+    "language": "en",
+    "tags": ["education", "technology", "blockchain", "decentralization"],
+    "website": "https://defiancenetwork.org",
+    "contact": "community@defiancenetwork.org"
+  },
+  "entries": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440001",
+      "metadata": {
+        "title": "Introduction to Decentralized Networks",
+        "description": "A comprehensive introduction to how decentralized networks work, covering P2P protocols, consensus mechanisms, and network topology. This lecture explains the fundamental concepts behind systems like DefianceNetwork and how they enable censorship-resistant communication.",
+        "author": "Dr. Sarah Chen",
+        "publisher": "TechEdu Institute",
+        "duration": 3600,
+        "size": 87654321,
+        "genre": "Educational",
+        "audio_type": "Lecture",
+        "language": "en",
+        "published_at": "2024-08-15T10:00:00Z",
+        "episode_number": 1,
+        "season_number": 1,
+        "series": "Decentralization Fundamentals",
+        "keywords": ["p2p", "decentralization", "networks", "blockchain", "consensus"],
+        "rating": "G",
+        "has_transcript": true,
+        "thumbnail": "https://cdn.defiancenetwork.org/thumbnails/intro-decentralized-networks.jpg",
+        "related_content": []
+      },
+      "uri_points": [
+        "https://cdn.defiancenetwork.org/audio/intro-decentralized-networks.mp3",
+        "ipfs://QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG"
+      ],
+      "backup_uris": [
+        "https://mirror1.defiancenetwork.org/audio/intro-decentralized-networks.mp3",
+        "https://mirror2.defiancenetwork.org/audio/intro-decentralized-networks.mp3"
+      ],
+      "checksums": [
+        {
+          "algorithm": "sha256",
+          "hash": "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3",
+          "size": 87654321
+        }
+      ],
+      "schedule": null
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440002",
+      "metadata": {
+        "title": "The Renaissance of Digital Privacy",
+        "description": "Explore how modern privacy technologies are experiencing a renaissance, drawing parallels to the historical Renaissance period. This audiobook chapter discusses cryptographic innovations, privacy coins, and decentralized identity systems.",
+        "author": "Marcus Williams",
+        "publisher": "Privacy Press",
+        "duration": 2700,
+        "size": 65432100,
+        "genre": "AudioBook",
+        "audio_type": "Chapter",
+        "language": "en",
+        "published_at": "2024-08-10T14:30:00Z",
+        "episode_number": 3,
+        "season_number": null,
+        "series": "Digital Renaissance",
+        "keywords": ["privacy", "cryptography", "renaissance", "digital-rights", "encryption"],
+        "rating": "PG",
+        "has_transcript": true,
+        "thumbnail": "https://cdn.defiancenetwork.org/thumbnails/digital-privacy-renaissance.jpg",
+        "related_content": ["550e8400-e29b-41d4-a716-446655440001"]
+      },
+      "uri_points": [
+        "https://cdn.defiancenetwork.org/audio/digital-privacy-renaissance-ch3.mp3"
+      ],
+      "backup_uris": [
+        "https://backup.defiancenetwork.org/audio/digital-privacy-renaissance-ch3.mp3"
+      ],
+      "checksums": [
+        {
+          "algorithm": "sha256", 
+          "hash": "b335b34920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae4",
+          "size": 65432100
+        }
+      ],
+      "schedule": null
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440003",
+      "metadata": {
+        "title": "Weekly Crypto & Tech Update - Episode 15",
+        "description": "This week's roundup of cryptocurrency developments, blockchain innovations, and decentralized technology news. Featuring discussions on new protocols, regulatory updates, and community-driven projects like DefianceNetwork.",
+        "author": "Alex Johnson & Maria Rodriguez",
+        "publisher": "DecentralizedTech Podcast",
+        "duration": 4500,
+        "size": 108000000,
+        "genre": "Podcast",
+        "audio_type": "Episode",
+        "language": "en",
+        "published_at": "2024-08-18T09:00:00Z",
+        "episode_number": 15,
+        "season_number": 2,
+        "series": "Weekly Crypto & Tech Update",
+        "keywords": ["crypto", "technology", "news", "blockchain", "defi"],
+        "rating": "G",
+        "has_transcript": false,
+        "thumbnail": "https://cdn.defiancenetwork.org/thumbnails/weekly-update-ep15.jpg",
+        "related_content": []
+      },
+      "uri_points": [
+        "https://cdn.defiancenetwork.org/audio/weekly-update-s2e15.mp3"
+      ],
+      "backup_uris": [],
+      "checksums": [
+        {
+          "algorithm": "sha256",
+          "hash": "c445c45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae5",
+          "size": 108000000
+        }
+      ],
+      "schedule": {
+        "available_from": "2024-08-18T09:00:00Z",
+        "available_until": null,
+        "available_days": null,
+        "available_hours": null,
+        "timezone": "UTC"
+      }
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440004",
+      "metadata": {
+        "title": "Building Sustainable Tech Communities",
+        "description": "A meditation on creating technology communities that prioritize sustainability, both environmental and social. This contemplative audio piece explores how projects like DefianceNetwork can contribute to a more sustainable digital future.",
+        "author": "Dr. Elena Vasquez",
+        "publisher": "EcoTech Meditations",
+        "duration": 1800,
+        "size": 43200000,
+        "genre": "Meditation",
+        "audio_type": "Single",
+        "language": "en",
+        "published_at": "2024-08-12T16:00:00Z",
+        "episode_number": null,
+        "season_number": null,
+        "series": null,
+        "keywords": ["sustainability", "community", "technology", "environment", "mindfulness"],
+        "rating": "G",
+        "has_transcript": true,
+        "thumbnail": "https://cdn.defiancenetwork.org/thumbnails/sustainable-tech-communities.jpg",
+        "related_content": []
+      },
+      "uri_points": [
+        "https://cdn.defiancenetwork.org/audio/sustainable-tech-communities.mp3"
+      ],
+      "backup_uris": [
+        "https://green-backup.defiancenetwork.org/audio/sustainable-tech-communities.mp3"
+      ],
+      "checksums": [
+        {
+          "algorithm": "sha256",
+          "hash": "d555d55920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae6",
+          "size": 43200000
+        }
+      ],
+      "schedule": null
+    }
+  ],
+  "signature": null
+}

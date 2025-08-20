@@ -1,0 +1,52 @@
+[package]
+name = "defiance-core"
+version = "0.1.0"
+edition = "2021"
+description = "Core P2P streaming and network functionality for DefianceNetwork"
+license = "MIT"
+
+[dependencies]
+# Core dependencies from workspace
+tokio = { workspace = true }
+tokio-util = { workspace = true }
+futures = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+bincode = { workspace = true }
+libp2p = { workspace = true }
+reqwest = { workspace = true }
+symphonia = { workspace = true }
+# GStreamer disabled for Windows builds
+# gstreamer = { workspace = true }
+# gstreamer-app = { workspace = true }
+# gstreamer-video = { workspace = true }
+# gstreamer-audio = { workspace = true }
+ed25519-dalek = { workspace = true }
+sha2 = { workspace = true }
+blake3 = { workspace = true }
+rand = { workspace = true }
+aes-gcm = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+dirs = { workspace = true }
+hex = { workspace = true }
+url = { workspace = true }
+sqlx = { workspace = true }
+# rocksdb = { workspace = true } # Disabled due to bindgen requirement
+names = { workspace = true }
+rand_xoshiro = { workspace = true }
+# ML dependencies disabled for Windows builds
+# candle-core = { workspace = true }
+# candle-nn = { workspace = true }
+
+# Local workspace dependencies
+defiance-bridge = { path = "../defiance-bridge" }
+defiance-discovery = { path = "../defiance-discovery" }
+
+[features]
+default = []
+# gpu-acceleration = ["candle-core/cuda", "candle-core/metal"]

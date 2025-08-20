@@ -1,0 +1,56 @@
+[package]
+name = "defiance-ui"
+version = "0.1.0"
+edition = "2021"
+description = "Renaissance/eco-friendly UI framework for DefianceNetwork"
+license = "MIT"
+
+[dependencies]
+# Core dependencies
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+uuid = { version = "1.0", features = ["v4"] }
+anyhow = "1.0"
+thiserror = "1.0"
+tracing = "0.1"
+tokio = { version = "1.0", features = ["full"] }
+
+# UI framework dependencies (conditionally enabled)
+egui = { version = "0.29", optional = true }
+eframe = { version = "0.29", default-features = false, optional = true, features = [
+    "default_fonts",
+    "glow",
+    "persistence"
+] }
+
+# Image and graphics
+image = { version = "0.25", features = ["png", "jpeg"], optional = true }
+rfd = { version = "0.15", optional = true } # File dialogs
+
+# Color and styling
+palette = { version = "0.7", optional = true }
+csscolorparser = { version = "0.7", optional = true }
+
+# Audio for UI feedback
+rodio = { version = "0.19", optional = true }
+
+# Cross-platform JSON configuration
+dirs = "5.0"
+
+# Local workspace dependencies
+defiance-core = { path = "../defiance-core" }
+defiance-audigy = { path = "../defiance-audigy" }
+defiance-bridge = { path = "../defiance-bridge" }
+
+[features]
+default = []
+desktop = ["egui", "eframe", "image", "rfd", "palette", "csscolorparser"]
+audio = ["rodio"]
+full = ["desktop", "audio"]
+
+[target.'cfg(target_os = "android")'.dependencies]
+android_logger = { version = "0.14", optional = true }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen = { version = "0.2", optional = true }
+web-sys = { version = "0.3", optional = true }

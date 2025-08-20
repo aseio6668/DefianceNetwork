@@ -1,0 +1,94 @@
+[workspace]
+members = [
+    "defiance-core",           # Core P2P streaming and network functionality
+    "defiance-audigy",         # Audigy audio streaming component
+    # "defiance-ui", # Temporarily disabled for compilation            # Renaissance/eco-friendly UI framework
+    "defiance-bridge",         # Cryptocurrency bridge (Paradigm, Arceon, etc.)
+    "defiance-mobile",         # Mobile platform support (Android/iOS)
+    "defiance-web",            # Web application interface
+    "defiance-cast",           # Chromecast and device casting support
+    # "defiance-ml", # Temporarily disabled for compilation             # ML optimization and network intelligence
+    "defiance-discovery",      # Peer discovery and network bootstrapping
+    "integration-tests",       # Integration tests for the platform
+]
+resolver = "2"
+
+[workspace.dependencies]
+# Core async and networking
+tokio = { version = "1.0", features = ["full"] }
+tokio-util = { version = "0.7", features = ["codec"] }
+futures = "0.3"
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+bincode = "1.3"
+
+# Networking and P2P
+libp2p = { version = "0.53", features = ["tcp", "mdns", "noise", "yamux", "gossipsub", "kad", "macros", "tokio", "request-response"] }
+reqwest = { version = "0.11", features = ["json", "stream"] }
+async-trait = "0.1"
+
+# Video/Audio streaming (platform-specific)
+symphonia = { version = "0.5", features = ["all"] }
+# Temporarily disable GStreamer and FFmpeg for Windows builds
+# gstreamer = "0.21"
+# gstreamer-app = "0.21"
+# gstreamer-video = "0.21"
+# gstreamer-audio = "0.21"
+# ffmpeg-next = "7.0"
+
+# UI and Graphics (disabled for now)
+# egui = "0.28"
+# eframe = { version = "0.28", default-features = false, features = ["glow"] }
+# wgpu = "0.19"
+# winit = "0.29"
+
+# Mobile support (disabled for now)
+# tauri = { version = "1.0", features = ["api-all"] }
+# android-activity = "0.5"
+
+# Web support
+wasm-bindgen = "0.2"
+web-sys = "0.3"
+js-sys = "0.3"
+
+# Casting support
+mdns = "1.1"
+
+# Cryptography and security
+ed25519-dalek = "2.0"
+sha2 = "0.10"
+blake3 = "1.3"
+rand = "0.8"
+aes-gcm = "0.10"
+
+# ML and optimization (disabled for Windows builds due to libclang dependency)
+# candle-core = { version = "0.4", features = ["cuda"] }
+# candle-nn = { version = "0.4" }
+# candle-transformers = { version = "0.4" }
+
+# Utilities
+uuid = { version = "1.0", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+clap = { version = "4.0", features = ["derive"] }
+anyhow = "1.0"
+thiserror = "1.0"
+tracing = "0.1"
+tracing-subscriber = "0.3"
+dirs = "5.0"
+hex = "0.4"
+url = { version = "2.4", features = ["serde"] }
+
+# Database and storage
+sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "sqlite"] }
+# rocksdb = "0.21" # Disabled due to bindgen/libclang requirement on Windows
+
+# Username generation
+names = "0.14"
+rand_xoshiro = "0.6"
+
+# Cross-platform compilation features
+[workspace.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu", "x86_64-pc-windows-msvc", "x86_64-apple-darwin", "aarch64-apple-darwin"]
+

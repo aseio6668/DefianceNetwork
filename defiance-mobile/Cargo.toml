@@ -1,0 +1,33 @@
+[package]
+name = "defiance-mobile"
+version = "0.1.0"
+edition = "2021"
+description = "Mobile platform support for DefianceNetwork (Android/iOS)"
+license = "MIT"
+
+[dependencies]
+# Core dependencies from workspace
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+# Mobile dependencies disabled for Windows builds
+# tauri = { workspace = true }
+# android-activity = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+url = { workspace = true }
+uuid = { workspace = true }
+
+# Local workspace dependencies
+defiance-core = { path = "../defiance-core" }
+defiance-ui = { path = "../defiance-ui" }
+defiance-audigy = { path = "../defiance-audigy" }
+defiance-cast = { path = "../defiance-cast" }
+
+# [target.'cfg(target_os = "android")'.dependencies]
+# android-activity = { workspace = true }
+
+[target.'cfg(target_os = "ios")'.dependencies]
+objc = "0.2"
+cocoa = "0.24"

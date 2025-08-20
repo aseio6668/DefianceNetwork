@@ -1,0 +1,86 @@
+# Rust
+target/
+Cargo.lock
+**/*.rs.bk
+*.pdb
+
+/target/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+logs/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Temporary files
+*.tmp
+*.temp
+/tmp/
+
+# Local configuration
+.env
+.env.local
+config.local.toml
+
+# Build artifacts
+dist/
+build/
+out/
+
+# Node.js (for web components)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Android
+*.apk
+*.ap_
+*.dex
+*.class
+
+# Cryptocurrency keys and wallets (SECURITY)
+*.key
+*.pem
+*.p12
+*.keystore
+wallet.dat
+wallet.json
+private_keys/
+wallets/
+
+# Test outputs
+test-results/
+coverage/
+
+# Documentation builds
+book/
+mdbook/
+
+# Profiling
+perf.data*
+callgrind.out.*
+massif.out.*
+
+# Platform-specific
+.cargo/

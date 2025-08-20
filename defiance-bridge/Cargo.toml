@@ -1,0 +1,29 @@
+[package]
+name = "defiance-bridge"
+version = "0.1.0"
+edition = "2021"
+description = "Cryptocurrency bridge for Paradigm, Arceon, and other networks"
+license = "MIT"
+
+[dependencies]
+# Core dependencies from workspace
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+ed25519-dalek = { workspace = true }
+sha2 = { workspace = true }
+blake3 = { workspace = true }
+rand = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+hex = { workspace = true }
+reqwest = { workspace = true }
+libp2p = { workspace = true }
+async-trait = { workspace = true }
+
+# Additional dependencies for Arceon integration
+url = { version = "2.4", features = ["serde"] }
+tempfile = "3.8"

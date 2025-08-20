@@ -1,0 +1,86 @@
+{
+  "version": "1.0.0",
+  "last_updated": 1703097600,
+  "bootstrap_nodes": [
+    {
+      "peer_id": "12D3KooWFjxn9nXm3gvJRzMQeTPDG7dPTH7qm8L5mVJ4zQ6s8R1H",
+      "multiaddr": "/ip4/203.0.113.10/tcp/9080",
+      "region": "us-east",
+      "capabilities": ["streaming", "content", "relay"],
+      "last_seen": 1703090000,
+      "reliability_score": 0.95
+    },
+    {
+      "peer_id": "12D3KooWLzN7hP9kVx3QzM2wT8sRjF6qN5bV7mJ3zL9hK2pD4sG1",
+      "multiaddr": "/ip4/198.51.100.20/tcp/9080",
+      "region": "us-west",
+      "capabilities": ["streaming", "content"],
+      "last_seen": 1703089500,
+      "reliability_score": 0.92
+    },
+    {
+      "peer_id": "12D3KooWKqN8mP7rVz4QwR5sT2fH6jL9bN3xM1yK5zP8hJ7qF2sA",
+      "multiaddr": "/ip4/192.0.2.30/tcp/9080",
+      "region": "eu-central",
+      "capabilities": ["streaming", "content", "storage"],
+      "last_seen": 1703088800,
+      "reliability_score": 0.89
+    },
+    {
+      "peer_id": "12D3KooWRqS9nQ8rWy5TzP3fJ6mL2bV7xN4yK1zM8hJ9qF5sD3gA",
+      "multiaddr": "/ip4/203.0.113.40/tcp/9080",
+      "region": "ap-southeast",
+      "capabilities": ["streaming", "relay"],
+      "last_seen": 1703087200,
+      "reliability_score": 0.87
+    }
+  ],
+  "regions": {
+    "us-east": [
+      {
+        "peer_id": "12D3KooWFjxn9nXm3gvJRzMQeTPDG7dPTH7qm8L5mVJ4zQ6s8R1H",
+        "multiaddr": "/ip4/203.0.113.10/tcp/9080",
+        "region": "us-east",
+        "capabilities": ["streaming", "content", "relay"],
+        "last_seen": 1703090000,
+        "reliability_score": 0.95
+      }
+    ],
+    "us-west": [
+      {
+        "peer_id": "12D3KooWLzN7hP9kVx3QzM2wT8sRjF6qN5bV7mJ3zL9hK2pD4sG1",
+        "multiaddr": "/ip4/198.51.100.20/tcp/9080",
+        "region": "us-west",
+        "capabilities": ["streaming", "content"],
+        "last_seen": 1703089500,
+        "reliability_score": 0.92
+      }
+    ],
+    "eu-central": [
+      {
+        "peer_id": "12D3KooWKqN8mP7rVz4QwR5sT2fH6jL9bN3xM1yK5zP8hJ7qF2sA",
+        "multiaddr": "/ip4/192.0.2.30/tcp/9080",
+        "region": "eu-central",
+        "capabilities": ["streaming", "content", "storage"],
+        "last_seen": 1703088800,
+        "reliability_score": 0.89
+      }
+    ],
+    "ap-southeast": [
+      {
+        "peer_id": "12D3KooWRqS9nQ8rWy5TzP3fJ6mL2bV7xN4yK1zM8hJ9qF5sD3gA",
+        "multiaddr": "/ip4/203.0.113.40/tcp/9080",
+        "region": "ap-southeast",
+        "capabilities": ["streaming", "relay"],
+        "last_seen": 1703087200,
+        "reliability_score": 0.87
+      }
+    ]
+  },
+  "network_stats": {
+    "total_nodes": 47,
+    "active_nodes": 42,
+    "average_uptime": 0.91,
+    "network_health": 0.88
+  }
+}

@@ -1,0 +1,29 @@
+[package]
+name = "defiance-cast"
+version = "0.1.0"
+edition = "2021"
+description = "Chromecast and device casting support for DefianceNetwork"
+license = "MIT"
+
+[dependencies]
+# Core dependencies from workspace
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+reqwest = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+url = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+
+# Local workspace dependencies
+defiance-core = { path = "../defiance-core" }
+
+# Casting discovery dependencies (conditional compilation handled in code)
+mdns = { workspace = true, optional = true }
+
+[features]
+default = ["discovery"]
+discovery = ["mdns"]

@@ -1,0 +1,29 @@
+[package]
+name = "defiance-web"
+version = "0.1.0"
+edition = "2021"
+description = "Web application interface for DefianceNetwork"
+license = "MIT"
+
+[dependencies]
+# Core dependencies from workspace
+serde = { workspace = true }
+serde_json = { workspace = true }
+wasm-bindgen = { workspace = true }
+web-sys = { workspace = true }
+js-sys = { workspace = true }
+reqwest = { workspace = true }
+url = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+
+# Local workspace dependencies (wasm-compatible only)
+defiance-bridge = { path = "../defiance-bridge" }
+defiance-audigy = { path = "../defiance-audigy" }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen-futures = "0.4"
+web-sys = { workspace = true }
+js-sys = { workspace = true }
+console_error_panic_hook = "0.1"
+wee_alloc = "0.4"

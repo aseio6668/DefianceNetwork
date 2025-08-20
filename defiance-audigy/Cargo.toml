@@ -1,0 +1,32 @@
+[package]
+name = "defiance-audigy"
+version = "0.1.0"
+edition = "2021"
+description = "Audigy audio streaming component with .augy file format support"
+license = "MIT"
+
+[dependencies]
+# Core dependencies from workspace
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+symphonia = { workspace = true }
+# GStreamer disabled for Windows builds
+# gstreamer = { workspace = true }
+# gstreamer-audio = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+url = { workspace = true }
+reqwest = { workspace = true }
+futures = { workspace = true }
+names = { workspace = true }
+rand = { workspace = true }
+toml = "0.8"
+serde_yaml = "0.9"
+
+# Local workspace dependencies
+defiance-core = { path = "../defiance-core" }
+defiance-bridge = { path = "../defiance-bridge" }
