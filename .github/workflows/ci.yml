@@ -52,13 +52,18 @@ jobs:
       if: runner.os == 'Linux'
       run: |
         sudo apt-get update
+        # Install GStreamer with error handling for package availability
         sudo apt-get install -y \
           libgstreamer1.0-dev \
           libgstreamer-plugins-base1.0-dev \
+          libgstreamer-plugins-good1.0-dev \
           libgstreamer-plugins-bad1.0-dev \
-          libgstreamer-plugins-ugly1.0-dev \
           libasound2-dev \
           pkg-config
+        # Try to install ugly plugins with fallback options
+        sudo apt-get install -y gstreamer1.0-plugins-ugly || \
+        sudo apt-get install -y libgstreamer-plugins-ugly1.0-dev || \
+        echo "Warning: GStreamer ugly plugins not available, continuing without them"
 
     - name: Install system dependencies (macOS)
       if: runner.os == 'macOS'
@@ -185,13 +190,18 @@ jobs:
       if: runner.os == 'Linux'
       run: |
         sudo apt-get update
+        # Install GStreamer with error handling for package availability
         sudo apt-get install -y \
           libgstreamer1.0-dev \
           libgstreamer-plugins-base1.0-dev \
+          libgstreamer-plugins-good1.0-dev \
           libgstreamer-plugins-bad1.0-dev \
-          libgstreamer-plugins-ugly1.0-dev \
           libasound2-dev \
           pkg-config
+        # Try to install ugly plugins with fallback options
+        sudo apt-get install -y gstreamer1.0-plugins-ugly || \
+        sudo apt-get install -y libgstreamer-plugins-ugly1.0-dev || \
+        echo "Warning: GStreamer ugly plugins not available, continuing without them"
 
     - name: Install system dependencies (macOS)
       if: runner.os == 'macOS'
