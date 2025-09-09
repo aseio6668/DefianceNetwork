@@ -252,6 +252,7 @@ impl PaymentGateway {
                 to: session.broadcaster_address.clone(),
                 amount: amount.raw_amount(),
                 fee,
+                chain_id: CryptoNetwork::Paradigm.chain_id(),
                 memo: Some(format!("DefianceNetwork payment for broadcast {}", session.broadcast_id)),
                 private_key: "encrypted_viewer_key".to_string(), // Would be properly managed in production
             };
@@ -349,6 +350,7 @@ impl PaymentGateway {
                     to: address.clone(),
                     amount: reward_amount.raw_amount(),
                     fee: 10000, // Fixed fee for rewards
+                    chain_id: CryptoNetwork::Paradigm.chain_id(),
                     memo: Some(format!("DefianceNetwork relay reward for session {}", session_id)),
                     private_key: "encrypted_platform_key".to_string(),
                 };
@@ -415,8 +417,8 @@ impl PaymentGateway {
                 .ok_or_else(|| anyhow::anyhow!("Payment session not found"))?
         };
         
-        // Calculate platform fee (e.g., 5%)
-        let platform_fee = session.total_earnings.percentage(5.0);
+        // Calculate platform fee (e.g., 0.5% to keep fees minimal)
+        let platform_fee = session.total_earnings.percentage(0.5);
         let broadcaster_payout = session.total_earnings.subtract(&platform_fee)?;
         
         // Process final payout to broadcaster
@@ -429,6 +431,7 @@ impl PaymentGateway {
                 to: session.broadcaster_address.clone(),
                 amount: broadcaster_payout.raw_amount(),
                 fee: 10000,
+                chain_id: CryptoNetwork::Paradigm.chain_id(),
                 memo: Some(format!("DefianceNetwork broadcaster payout for session {}", session_id)),
                 private_key: "encrypted_platform_key".to_string(),
             };
@@ -690,14 +693,14 @@ mod tests {
             price: CryptoAmount::new(CryptoNetwork::Paradigm, 500000000, 8), // 5 PAR
         };
         let amount = gateway.calculate_payment_amount(&ppv_model, &ViewerPaymentType::OneTime, None).unwrap();
-        assert_eq!(amount.raw_amount, 500000000);
+        assert_eq!(amount.raw_amount(), 500000000);
         
         // Pay per minute
         let ppm_model = PaymentModel::PayPerMinute {
             price_per_minute: CryptoAmount::new(CryptoNetwork::Paradigm, 10000000, 8), // 0.1 PAR per minute
         };
         let amount = gateway.calculate_payment_amount(&ppm_model, &ViewerPaymentType::PerMinute, Some(30)).unwrap();
-        assert_eq!(amount.raw_amount, 300000000); // 30 minutes * 0.1 PAR
+        assert_eq!(amount.raw_amount(), 300000000); // 30 minutes * 0.1 PAR
     }
     
     #[test]

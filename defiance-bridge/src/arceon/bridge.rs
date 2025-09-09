@@ -37,7 +37,7 @@ pub struct ArceonBridgeConfig {
 impl Default for ArceonBridgeConfig {
     fn default() -> Self {
         Self {
-            bridge_fee_percentage: 0.5, // 0.5% bridge fee
+            bridge_fee_percentage: 0.01, // 0.01% bridge fee (~$0.01 on $100 transaction)
             min_transfer_amount: 10000000, // 0.1 ARC minimum
             max_transfer_amount: 1000000000000, // 10,000 ARC maximum
             confirmation_blocks: 6,
@@ -308,11 +308,14 @@ impl ArceonBridge {
         }
         
         // Send Arceon transaction
+        let mut tx_options = super::TransactionOptions::default();
+        tx_options.chain_id = CryptoNetwork::Arceon.chain_id();
+        
         let bridge_tx = self.arceon_network.send_transaction_enhanced(
             &bridge_account.name,
             &transfer.to_address,
             net_amount as u64,
-            super::TransactionOptions::default(),
+            tx_options,
         ).await?;
         
         tracing::info!("Sent Arceon transaction for cross-chain transfer: {}", bridge_tx.hash);
@@ -493,7 +496,7 @@ mod tests {
     #[test]
     fn test_bridge_config_default() {
         let config = ArceonBridgeConfig::default();
-        assert_eq!(config.bridge_fee_percentage, 0.5);
+        assert_eq!(config.bridge_fee_percentage, 0.01);
         assert_eq!(config.confirmation_blocks, 6);
         assert!(config.enable_auto_processing);
         assert_eq!(config.supported_networks, vec![CryptoNetwork::Paradigm]);

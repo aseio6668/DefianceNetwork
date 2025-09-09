@@ -196,6 +196,7 @@ impl ArceonNetwork {
         let bridge_tx = BridgeTransaction {
             hash: tx_hash.clone(),
             network: CryptoNetwork::Arceon,
+            chain_id: CryptoNetwork::Arceon.chain_id(),
             from_address: account.address.clone(),
             to_address: to_address.to_string(),
             amount: CryptoAmount::new(CryptoNetwork::Arceon, amount as i64, 8),
@@ -317,6 +318,7 @@ pub struct TransactionOptions {
     pub fee_rate: Option<u64>,
     pub confirmation_target: Option<u32>,
     pub replace_by_fee: bool,
+    pub chain_id: Option<u64>, // Chain ID for multi-network support
     pub memo: Option<String>,
 }
 
@@ -326,6 +328,7 @@ impl Default for TransactionOptions {
             fee_rate: None,
             confirmation_target: None,
             replace_by_fee: false,
+            chain_id: None,
             memo: None,
         }
     }
@@ -380,11 +383,14 @@ impl BridgeNetwork for ArceonNetwork {
         let account = wallet.get_account_by_address(from)?;
         drop(wallet);
         
+        let mut tx_options = TransactionOptions::default();
+        tx_options.chain_id = CryptoNetwork::Arceon.chain_id();
+        
         self.send_transaction_enhanced(
             &account.name,
             to,
             amount.amount_smallest_unit() as u64,
-            TransactionOptions::default(),
+            tx_options,
         ).await
     }
     
@@ -442,6 +448,7 @@ impl BridgeNetwork for ArceonNetwork {
             bridge_transactions.push(BridgeTransaction {
                 hash: tx.hash,
                 network: CryptoNetwork::Arceon,
+                chain_id: CryptoNetwork::Arceon.chain_id(),
                 from_address: tx.from_address,
                 to_address: tx.to_address,
                 amount: CryptoAmount::new(CryptoNetwork::Arceon, tx.amount, 8),

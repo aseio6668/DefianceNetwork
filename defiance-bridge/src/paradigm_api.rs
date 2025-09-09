@@ -16,6 +16,7 @@ pub struct ParadigmApiClient {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ParadigmTransaction {
     pub hash: String,
+    pub chain_id: Option<u64>, // Chain ID for network identification
     pub from: String,
     pub to: String,
     pub amount: u64, // In satoshi-like units
@@ -53,6 +54,7 @@ pub struct BroadcastRequest {
     pub to: String,
     pub amount: u64,
     pub fee: u64,
+    pub chain_id: Option<u64>, // Chain ID for EIP-155 compliance
     pub memo: Option<String>,
     pub private_key: String, // Would be encrypted in production
 }
@@ -416,6 +418,7 @@ mod tests {
     fn test_transaction_serialization() {
         let tx = ParadigmTransaction {
             hash: "test_hash".to_string(),
+            chain_id: Some(9080),
             from: "PAR1234".to_string(),
             to: "PAR5678".to_string(),
             amount: 1000000,

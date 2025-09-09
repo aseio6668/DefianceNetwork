@@ -49,6 +49,19 @@ impl CryptoNetwork {
             CryptoNetwork::Custom(name) => name,
         }
     }
+
+    /// Get the chain ID for this network (EIP-155 compliance)
+    pub fn chain_id(&self) -> Option<u64> {
+        match self {
+            CryptoNetwork::Paradigm => Some(9080), // Custom chain ID for Paradigm
+            CryptoNetwork::Arceon => Some(9081),   // Custom chain ID for Arceon
+            CryptoNetwork::Bitcoin => None,        // Bitcoin doesn't use chain IDs
+            CryptoNetwork::Ethereum => Some(1),    // Ethereum mainnet
+            CryptoNetwork::Litecoin => None,       // Litecoin doesn't use chain IDs
+            CryptoNetwork::Monero => None,         // Monero doesn't use chain IDs
+            CryptoNetwork::Custom(_) => Some(9999), // Default for custom networks
+        }
+    }
 }
 
 /// Cryptocurrency amounts with precision
@@ -147,7 +160,7 @@ impl Default for BridgeConfig {
             arceon_node_url: Some("http://localhost:8081".to_string()),
             min_bridge_amount: min_amounts,
             max_bridge_amount: max_amounts,
-            bridge_fee_percentage: 0.5, // 0.5% fee
+            bridge_fee_percentage: 0.01, // 0.01% fee (~$0.01 on $100 transaction)
             confirmation_blocks: confirmations,
             enable_staking: true,
             enable_payments: true,
@@ -488,8 +501,8 @@ mod tests {
         let diff = amount1.subtract(&amount2).unwrap();
         assert_eq!(diff.amount, 50_00000000);
 
-        let fee = amount1.percentage(0.5);
-        assert_eq!(fee.amount, 50000000); // 0.5% of 100 PAR
+        let fee = amount1.percentage(0.01);
+        assert_eq!(fee.amount, 1000000); // 0.01% of 100 PAR
     }
 
     #[test]
@@ -559,5 +572,14 @@ mod tests {
         let custom1 = CryptoNetwork::Custom("test".to_string());
         let custom2 = CryptoNetwork::Custom("test".to_string());
         assert_eq!(custom1, custom2);
+    }
+
+    #[test]
+    fn test_chain_id() {
+        assert_eq!(CryptoNetwork::Paradigm.chain_id(), Some(9080));
+        assert_eq!(CryptoNetwork::Arceon.chain_id(), Some(9081));
+        assert_eq!(CryptoNetwork::Ethereum.chain_id(), Some(1));
+        assert_eq!(CryptoNetwork::Bitcoin.chain_id(), None);
+        assert_eq!(CryptoNetwork::Custom("test".to_string()).chain_id(), Some(9999));
     }
 }

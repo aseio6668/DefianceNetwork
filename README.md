@@ -1,282 +1,107 @@
-# DefianceNetwork - Decentralized Streaming Platform
+# DefianceNetwork - Decentralized Streaming Platform (Prototype)
 
-DefianceNetwork is a revolutionary decentralized internet streaming platform that combines P2P video/audio streaming, cryptocurrency integration, and machine learning optimization. Built in Rust for cross-platform compatibility.
+**⚠️ This project is currently in an early, prototypical stage of development. The code represents an architectural skeleton and is not yet functional as a complete application. ⚠️**
 
-## 🌟 Core Features
+DefianceNetwork is a decentralized internet streaming platform built in Rust. The goal is to combine P2P video/audio streaming, cryptocurrency integration, and a modular, cross-platform architecture.
 
-### 📺 Defiance TV
-- **Decentralized Video Streaming**: P2P broadcast and viewing network
-- **User-Generated Content**: Anyone can create and broadcast shows, movies, live streams
-- **Zero Central Authority**: Community-driven content discovery and moderation
-- **Chromecast Support**: Stream to any casting-enabled device
+## 🌟 Core Architectural Concepts
 
-### 🎵 Audigy Audio Platform
-- **Educational Audio Content**: Podcasts, audiobooks, lectures, educational material
-- **`.augy` File Format**: Standardized format for audio content metadata and streaming
-- **Cross-Network Discovery**: Find content across multiple decentralized networks
-- **Offline Mode**: Download and sync content for offline listening
+This repository contains the foundational code for the DefianceNetwork. The architecture is designed to be modular, with different functionalities separated into individual Rust crates.
 
-### 💰 Cryptocurrency Integration
-- **Paradigm (PAR) Integration**: Native support for Paradigm cryptocurrency payments and transactions
-- **Arceon (ARC) Network**: Full integration with Arceon blockchain including wallet management, RPC client, and cross-chain bridge
-- **Defiance Bridge**: Multi-cryptocurrency bridge supporting cross-chain transfers between Paradigm, Arceon, Bitcoin, Ethereum, and more
-- **Smart Contract Support**: Automated payments, escrow services, and content monetization
-- **Microtransactions**: Support content creators through crypto payments and staking rewards
+### 🏗️ Project Structure & Implemented Crates
 
-### 🤖 AI-Powered Optimization
-- **ML Network Optimization**: Reduce latency and improve streaming quality
-- **Intelligent Peer Discovery**: Find optimal peers for content streaming
-- **Adaptive Bitrate**: Dynamic quality adjustment based on network conditions
-- **Predictive Caching**: ML-driven content pre-caching strategies
+The project is organized as a Rust workspace. Here are the currently enabled crates and their status:
 
-## 🏗️ Architecture
+*   `defiance-core`: Defines the core data structures for the P2P network, streaming, and video processing. Contains a skeleton implementation of a `libp2p`-based network stack.
+*   `defiance-audigy`: The most developed component. It defines the `.augy` metadata format for audio content and includes a parser and a simulated audio streaming engine.
+*   `defiance-bridge`: Provides the architectural foundation for a multi-cryptocurrency bridge. It includes skeleton implementations for "Paradigm" and "Arceon" networks.
+*   `defiance-cast`: A skeleton implementation for Chromecast support, with data structures for devices and sessions but no-op protocol implementation.
+*   `defiance-discovery`: A functional peer discovery mechanism that can fetch a list of bootstrap nodes from a JSON file in a GitHub repository.
 
-### Project Structure
-```
-DefianceNetwork/
-├── defiance-core/          # Core P2P streaming and network functionality
-├── defiance-audigy/        # Audigy audio streaming component
-├── defiance-ui/            # Native eco-friendly UI framework
-├── defiance-bridge/        # Cryptocurrency bridge (Paradigm, Arceon, etc.)
-├── defiance-mobile/        # Mobile platform support (Android/iOS)
-├── defiance-web/           # Web application interface
-├── defiance-cast/          # Chromecast and device casting support
-├── defiance-ml/            # ML optimization and network intelligence
-└── defiance-discovery/     # Peer discovery and network bootstrapping
-```
+### ❌ Disabled Components
 
-### Key Technologies
-- **Networking**: libp2p (gossipsub, mDNS, Kademlia DHT)
-- **Streaming**: GStreamer, FFmpeg, Symphonia
-- **UI**: egui with custom Renaissance/eco-friendly theming
-- **Crypto**: ed25519-dalek, AES-GCM encryption
-- **ML**: Candle (CUDA/Metal acceleration support)
-- **Storage**: SQLite, RocksDB for local data
-- **Cross-Platform**: Native desktop, Android, iOS, Web (WASM)
+The following components, described in the original `README.md`, are currently **disabled** in the build due to being incomplete:
+
+*   `defiance-ui`: The user interface.
+*   `defiance-ml`: The machine learning components for network optimization.
 
 ## 🚀 Getting Started
 
-### 📋 Current Implementation Status
-
-#### ✅ **Completed Components**
-- **Core P2P Network**: libp2p integration with gossipsub, mDNS, and Kademlia DHT
-- **Audigy Audio Engine**: Complete audio streaming platform with .augy format support
-- **Cryptocurrency Bridge**: Full Paradigm and Arceon integration with cross-chain transfers
-- **Chromecast Support**: Device casting functionality for streaming to TVs
-- **Cross-Platform Support**: Successful builds and tests on Windows, Linux, and macOS
-
-#### 🚧 **In Development**
-- **Machine Learning Modules**: Network optimization and intelligent peer selection
-- **Native UI Framework**: Eco-friendly user interface with nature-inspired design and dark/light themes
-- **Mobile Applications**: Android and iOS native app development
-- **Web Interface**: Progressive web app with WebRTC streaming
-
-#### 📅 **Roadmap**
-- **Q1 2024**: ML optimization modules and native desktop UI completion
-- **Q2 2024**: Mobile app beta release and web interface
-- **Q3 2024**: Enhanced security features and production deployment infrastructure
-- **Q4 2024**: Advanced content discovery and recommendation systems
-
 ### Prerequisites
-- Rust 1.70+ (latest stable recommended)
-- GStreamer development libraries
-- Platform-specific dependencies (see platform sections below)
+
+*   Rust 1.70+ (latest stable recommended)
 
 ### Quick Start
+
 ```bash
 # Clone the repository
 git clone https://github.com/aseio6668/DefianceNetwork.git
 cd DefianceNetwork
 
-# Build all components
+# Build all enabled components
 cargo build --release
 
-# Run the desktop application
-cargo run -p defiance-ui
-
-# Or run individual components
-cargo run -p defiance-core     # Core network node
-cargo run -p defiance-audigy   # Audigy audio player
+# Run the integration tests to verify the build
+cargo test -p integration-tests
 ```
 
-### Platform-Specific Builds
+**Note:** There is currently no runnable application. The project consists of library crates that are not yet integrated into a final executable.
 
-#### Windows
-```bash
-# Install dependencies
-winget install GStreamer.GStreamer
+## 📅 Proposed Roadmap
 
-# Build
-cargo build --release --target x86_64-pc-windows-msvc
-```
+This roadmap outlines the next steps to move the project from a prototype to a functional application.
 
-#### Linux
-```bash
-# Install dependencies (Ubuntu/Debian)
-sudo apt install libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
+### Phase 1: Core Network & Streaming (Short-Term)
 
-# Build
-cargo build --release --target x86_64-unknown-linux-gnu
-```
+*   **Objective:** Create a functional P2P network that can stream data between two peers.
+*   **Key Tasks:**
+    1.  **Complete `defiance-core` network layer:**
+        *   Implement the request-response protocol for direct peer communication.
+        *   Flesh out the event loop to handle incoming `NetworkMessage`s.
+        *   Wire the network layer to the `StreamingEngine`.
+    2.  **Implement basic streaming in `StreamingEngine`:**
+        *   Implement the logic for chunking data and sending it over the network.
+        *   Implement the logic for receiving and reassembling chunks.
+    3.  **Create a simple CLI application:**
+        *   Create a new crate for a CLI application that can act as a broadcaster or a viewer.
+        *   This will allow for testing the core functionality without a complex UI.
 
-#### macOS
-```bash
-# Install dependencies
-brew install gstreamer gst-plugins-base
+### Phase 2: Video & Audio Integration (Mid-Term)
 
-# Build for Intel
-cargo build --release --target x86_64-apple-darwin
+*   **Objective:** Integrate actual video and audio processing into the streaming engine.
+*   **Key Tasks:**
+    1.  **Integrate a media library:**
+        *   Choose and integrate a media library like `gstreamer` or `ffmpeg` for video and audio processing.
+        *   This will involve uncommenting the dependencies in `Cargo.toml` and fixing any build issues.
+    2.  **Implement `VideoEngine`:**
+        *   Implement the video encoding and decoding logic.
+        *   Connect the `VideoEngine` to the `StreamingEngine` to process and stream video data.
+    3.  **Enhance `defiance-audigy`:**
+        *   Move from simulated streaming to actual audio streaming over the P2P network.
 
-# Build for Apple Silicon
-cargo build --release --target aarch64-apple-darwin
-```
+### Phase 3: UI & Advanced Features (Long-Term)
 
-#### Android
-```bash
-# Install Android NDK and add target
-rustup target add aarch64-linux-android armv7-linux-androideabi
-
-# Build
-cargo build --release --target aarch64-linux-android
-```
-
-#### Web (WASM)
-```bash
-# Install wasm-pack
-cargo install wasm-pack
-
-# Add WASM target
-rustup target add wasm32-unknown-unknown
-
-# Build web component
-cd defiance-web
-wasm-pack build --target web
-```
-
-## 🎨 User Interface Design
-
-The UI follows an **Eco-Friendly** design philosophy:
-- **Natural Color Palette**: Earth tones, forest greens, warm golds
-- **Organic Shapes**: Rounded corners, flowing lines, nature-inspired elements
-- **Sustainable Imagery**: Tree motifs, water elements, renewable energy icons
-- **Classic Typography**: Serif fonts for headers, clean sans-serif for body text
-- **Dark/Light Modes**: Both supporting the nature-inspired aesthetic
-
-## 👤 User System
-
-### Random Username Generation
-- **Format**: `WaterAngel03`, `GoldenFish22`, `MysticForest88`
-- **Structure**: [Adjective/Nature][Noun][Number]
-- **Immutable**: Usernames cannot be changed to prevent spam/advertising
-- **Genuinely Humorous**: Combinations designed to be memorable and fun
-
-### Privacy Features
-- **Opt-in Visibility**: Users choose whether to show viewing activity
-- **Anonymous Viewing**: Default mode protects user privacy
-- **Encrypted Communications**: All P2P communication is encrypted
-
-## 🌐 Network Architecture
-
-### Peer Discovery
-1. **mDNS Discovery**: Local network peer detection
-2. **DHT Bootstrap**: Kademlia distributed hash table
-3. **GitHub Fallback**: Repository-based seed node discovery
-4. **Relay Nodes**: Community-operated relay points
-
-### Content Distribution
-- **Chunk-based Streaming**: Content split into encrypted chunks
-- **Redundant Storage**: Multiple peers store popular content
-- **Bandwidth Sharing**: Users contribute upload bandwidth for network health
-- **Quality Adaptation**: Dynamic resolution/bitrate based on network conditions
-
-## 💎 Cryptocurrency Integration
-
-### Paradigm (PAR) Support
-- **Native Integration**: Direct wallet and transaction support with full RPC client
-- **Content Monetization**: Creators earn PAR from viewers through automated smart contracts
-- **Network Incentives**: Users earn PAR for providing bandwidth/storage and network participation
-- **Governance**: PAR holders can vote on network decisions and protocol upgrades
-
-### Arceon (ARC) Integration
-- **Comprehensive Blockchain Support**: Full RPC client with automatic failover and retry logic
-- **Wallet Management**: Secure key generation, account creation, and wallet persistence
-- **Cross-Chain Bridge**: Seamless transfers between Arceon and Paradigm networks
-- **Game Network Integration**: Native support for Arceon's gaming ecosystem and in-game economies
-- **UTXO Management**: Complete support for Arceon's Bitcoin-like transaction model
-
-### Defiance Bridge
-- **Multi-Chain Support**: Bridge between Paradigm, Arceon, Bitcoin, Ethereum, Litecoin, Monero
-- **Atomic Swaps**: Secure cross-chain transactions with automatic confirmation monitoring
-- **Smart Fee Calculation**: Dynamic fee estimation based on network conditions
-- **Transaction Monitoring**: Real-time status tracking and automatic refund handling
-- **Liquidity Pools**: Decentralized exchange functionality with staking rewards
-
-## 🧠 Machine Learning Features
-
-### Network Optimization
-- **Latency Prediction**: ML models predict best peer connections
-- **Bandwidth Optimization**: Intelligent chunk prioritization
-- **Quality Enhancement**: AI-driven video/audio upscaling
-- **Content Recommendation**: Personalized content discovery
-
-### Adaptive Streaming
-- **Real-time Quality Adjustment**: Based on network conditions
-- **Predictive Buffering**: ML-driven content pre-loading
-- **Peer Selection**: Optimal peer routing for content delivery
-- **Failure Recovery**: Automatic failover to backup peers
-
-## 📱 Platform Support
-
-### Desktop Applications
-- **Windows**: Native Win32 application with Windows 10/11 integration
-- **Linux**: GTK-based application with system tray support
-- **macOS**: Native Cocoa application with menu bar integration
-
-### Mobile Applications
-- **Android**: Native Android app with casting support
-- **iOS**: Native iOS app with AirPlay integration
-
-### Web Application
-- **Progressive Web App**: Full-featured web interface
-- **WebRTC Streaming**: Browser-based P2P streaming
-- **Offline Support**: Service worker for offline functionality
-
-## 🔒 Security & Privacy
-
-### Encryption
-- **End-to-End Encryption**: All content streams are encrypted
-- **Perfect Forward Secrecy**: Session keys rotated regularly
-- **Zero-Knowledge Architecture**: No central server storage of user data
-
-### Content Protection
-- **Digital Signatures**: All content signed by creators
-- **Reputation System**: Community-driven content validation
-- **DMCA Compliance**: Distributed content takedown mechanisms
+*   **Objective:** Build a user interface and begin implementing the more advanced features.
+*   **Key Tasks:**
+    1.  **Re-enable `defiance-ui`:**
+        *   Choose a UI framework (the original `egui` is a good option) and start building the user interface.
+        *   Connect the UI to the core application logic.
+    2.  **Implement `defiance-bridge`:**
+        *   Flesh out the cryptocurrency bridge with actual blockchain integrations.
+    3.  **Begin work on `defiance-ml`:**
+        *   Start implementing the machine learning models for network optimization.
 
 ## 🤝 Contributing
 
-### Development Setup
-1. Install Rust and required dependencies
-2. Clone the repository
-3. Run `cargo test` to verify setup
-4. See individual component READMEs for specific development guides
+This project is in its early stages, and contributions are welcome. Please focus on the short-term goals in the roadmap to help build a stable foundation.
 
 ### Contribution Guidelines
-- Follow Rust naming conventions and best practices
-- Write comprehensive tests for new features
-- Update documentation for public APIs
-- Submit PRs with clear descriptions and test coverage
+
+*   Follow Rust naming conventions and best practices.
+*   Write tests for new features.
+*   Update documentation for public APIs.
+*   Submit PRs with clear descriptions and test coverage.
 
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🌍 Community
-
-- **Discord**: [Join our community](https://discord.gg/defiancenetwork)
-- **GitHub Discussions**: [Technical discussions](https://github.com/DefianceNetwork/discussions)
-- **Reddit**: [r/DefianceNetwork](https://reddit.com/r/DefianceNetwork)
-
----
-
-**Built with 🦀 Rust and ❤️ by the DefianceNetwork community**

@@ -77,6 +77,25 @@ impl CryptoManager {
     pub fn get_content_key(&self, content_id: &Uuid) -> Option<&ContentKey> {
         self.content_keys.get(content_id)
     }
+
+    /// Encrypt data using a default internal key.
+    /// This is useful for transient data that doesn't need a specific content key.
+    pub fn encrypt(&self, data: &[u8]) -> Result<Vec<u8>> {
+        let key_bytes = self.signing_key.to_bytes();
+        let key = Key::<Aes256Gcm>::from_slice(&key_bytes[..32]);
+        let cipher = Aes256Gcm::new(key);
+        let nonce = Nonce::from_slice(b"unique nonce"); // NOTE: In a real application, this MUST be unique for each encryption
+        cipher.encrypt(nonce, data).map_err(|e| DefianceError::Crypto(e.to_string()).into())
+    }
+
+    /// Decrypt data using the default internal key.
+    pub fn decrypt(&self, encrypted_data: &[u8]) -> Result<Vec<u8>> {
+        let key_bytes = self.signing_key.to_bytes();
+        let key = Key::<Aes256Gcm>::from_slice(&key_bytes[..32]);
+        let cipher = Aes256Gcm::new(key);
+        let nonce = Nonce::from_slice(b"unique nonce"); // NOTE: This must match the nonce used for encryption
+        cipher.decrypt(nonce, encrypted_data).map_err(|e| DefianceError::Crypto(e.to_string()).into())
+    }
     
     /// Encrypt content with signature
     pub fn encrypt_content(

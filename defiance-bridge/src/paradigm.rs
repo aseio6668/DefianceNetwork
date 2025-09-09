@@ -43,6 +43,7 @@ impl BridgeNetwork for ParadigmNetwork {
             to: to.to_string(),
             amount: amount.raw_amount(),
             fee,
+            chain_id: CryptoNetwork::Paradigm.chain_id(),
             memo: Some(format!("DefianceNetwork transaction at {}", chrono::Utc::now().timestamp())),
             private_key: "encrypted_private_key".to_string(), // Would be properly encrypted in production
         };
@@ -58,6 +59,7 @@ impl BridgeNetwork for ParadigmNetwork {
         Ok(BridgeTransaction {
             hash: tx_hash,
             network: CryptoNetwork::Paradigm,
+            chain_id: CryptoNetwork::Paradigm.chain_id(),
             from_address: from.to_string(),
             to_address: to.to_string(),
             amount,
@@ -121,6 +123,7 @@ impl BridgeNetwork for ParadigmNetwork {
             bridge_txs.push(BridgeTransaction {
                 hash: tx.hash,
                 network: CryptoNetwork::Paradigm,
+                chain_id: tx.chain_id.or(CryptoNetwork::Paradigm.chain_id()),
                 from_address: tx.from,
                 to_address: tx.to,
                 amount: CryptoAmount::from_u64(CryptoNetwork::Paradigm, tx.amount, 8),

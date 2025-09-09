@@ -16,20 +16,13 @@ pub struct DefianceStorage {
 
 impl DefianceStorage {
     /// Create new storage instance
-    pub async fn new(database_path: &str) -> Result<Self> {
-        let pool = if database_path == ":memory:" {
-            SqlitePool::connect("sqlite::memory:").await
-        } else {
-            // Ensure directory exists
-            if let Some(parent) = Path::new(database_path).parent() {
-                tokio::fs::create_dir_all(parent).await
-                    .map_err(|e| DefianceError::Storage(format!("Failed to create directory: {}", e)))?;
-            }
-            
-            let db_url = format!("sqlite://{}", database_path);
-            SqlitePool::connect(&db_url).await
-        }
-        .map_err(|e| DefianceError::Storage(format!("Database connection failed: {}", e)))?;
+    pub async fn new(_database_path: &str) -> Result<Self> {
+        let temp_dir = std::env::temp_dir();
+        let db_path = temp_dir.join("defiance.db");
+        let db_url = format!("sqlite://{}?mode=rwc", db_path.to_str().unwrap());
+        
+        let pool = SqlitePool::connect(&db_url).await
+            .map_err(|e| DefianceError::Storage(format!("Database connection failed: {}", e)))?;
         
         let storage = Self { pool };
         storage.initialize_schema().await?;

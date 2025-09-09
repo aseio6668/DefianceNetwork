@@ -7,9 +7,11 @@ use url::Url;
 use anyhow::Result;
 use tokio::sync::{mpsc, RwLock};
 use std::sync::Arc;
+use defiance_core::network::P2PNetwork;
 
 /// Audio streaming manager
 pub struct AudioStreamer {
+    network: Arc<RwLock<P2PNetwork>>,
     active_sessions: Arc<RwLock<HashMap<Uuid, StreamingSession>>>,
     event_sender: mpsc::UnboundedSender<StreamingEvent>,
     event_receiver: Option<mpsc::UnboundedReceiver<StreamingEvent>>,
@@ -94,10 +96,11 @@ impl Default for StreamingConfig {
 
 impl AudioStreamer {
     /// Create new audio streamer
-    pub async fn new() -> Result<Self> {
+    pub async fn new(network: Arc<RwLock<P2PNetwork>>) -> Result<Self> {
         let (event_sender, event_receiver) = mpsc::unbounded_channel();
         
         Ok(Self {
+            network,
             active_sessions: Arc::new(RwLock::new(HashMap::new())),
             event_sender,
             event_receiver: Some(event_receiver),
@@ -129,15 +132,14 @@ impl AudioStreamer {
         Ok(())
     }
 
-    /// Start streaming from URL
-    pub async fn start_streaming(&self, source_url: &Url) -> Result<Uuid> {
+    /// Start streaming from the P2P network
+    pub async fn start_streaming(&self, content_id: Uuid) -> Result<Uuid> {
         let session_id = Uuid::new_v4();
-        let content_id = Uuid::new_v4(); // TODO: Get actual content ID
 
         let session = StreamingSession {
             id: session_id,
             content_id,
-            source_url: source_url.clone(),
+            source_url: "p2p://".parse().unwrap(), // Placeholder for P2P stream
             started_at: chrono::Utc::now().timestamp(),
             quality: self.config.preferred_quality.clone(),
             state: StreamingState::Initializing,
@@ -151,7 +153,6 @@ impl AudioStreamer {
         {
             let mut sessions = self.active_sessions.write().await;
             
-            // Check concurrent stream limit
             if sessions.len() >= self.config.max_concurrent_streams {
                 return Err(anyhow::anyhow!("Maximum concurrent streams reached"));
             }
@@ -159,23 +160,15 @@ impl AudioStreamer {
             sessions.insert(session_id, session);
         }
 
-        // Send event
         self.send_event(StreamingEvent::SessionStarted { session_id }).await;
 
-        // Start streaming task
-        let sessions_arc = Arc::clone(&self.active_sessions);
-        let event_sender = self.event_sender.clone();
-        let source_url = source_url.clone();
-        let source_url_for_log = source_url.clone();
-        let config = self.config.clone();
+        // TODO: Implement P2P streaming logic
+        // This would involve:
+        // 1. Finding peers with the requested content_id.
+        // 2. Requesting chunks from those peers using the network layer.
+        // 3. Feeding the received chunks into a buffer for playback.
 
-        tokio::spawn(async move {
-            if let Err(e) = Self::stream_task(sessions_arc, event_sender, session_id, source_url, config).await {
-                tracing::error!("Streaming task failed for session {}: {}", session_id, e);
-            }
-        });
-
-        tracing::info!("Started streaming session {} from {}", session_id, source_url_for_log);
+        tracing::info!("Started P2P streaming session {} for content {}", session_id, content_id);
         Ok(session_id)
     }
 
@@ -275,144 +268,6 @@ impl AudioStreamer {
             total_downloaded,
             average_speed,
         }
-    }
-
-    /// Internal streaming task
-    async fn stream_task(
-        sessions: Arc<RwLock<HashMap<Uuid, StreamingSession>>>,
-        event_sender: mpsc::UnboundedSender<StreamingEvent>,
-        session_id: Uuid,
-        source_url: Url,
-        config: StreamingConfig,
-    ) -> Result<()> {
-        // Update session state to buffering
-        {
-            let mut sessions_lock = sessions.write().await;
-            if let Some(session) = sessions_lock.get_mut(&session_id) {
-                session.state = StreamingState::Buffering;
-            }
-        }
-
-        let _ = event_sender.send(StreamingEvent::BufferingProgress { 
-            session_id, 
-            progress: 0.0 
-        });
-
-        // Create HTTP client
-        let client = reqwest::Client::new();
-        
-        // Start streaming request
-        let response = client
-            .get(source_url.clone())
-            .timeout(std::time::Duration::from_secs(config.download_timeout_seconds))
-            .send()
-            .await?;
-
-        if !response.status().is_success() {
-            let error = format!("HTTP error: {}", response.status());
-            let _ = event_sender.send(StreamingEvent::SessionError { 
-                session_id, 
-                error: error.clone() 
-            });
-            return Err(anyhow::anyhow!(error));
-        }
-
-        // Get content length if available
-        let total_size = response.content_length();
-        {
-            let mut sessions_lock = sessions.write().await;
-            if let Some(session) = sessions_lock.get_mut(&session_id) {
-                session.total_bytes = total_size;
-            }
-        }
-
-        // Start streaming
-        {
-            let mut sessions_lock = sessions.write().await;
-            if let Some(session) = sessions_lock.get_mut(&session_id) {
-                session.state = StreamingState::Streaming;
-            }
-        }
-
-        let _ = event_sender.send(StreamingEvent::StreamingStarted { session_id });
-
-        // Stream data in chunks
-        let mut bytes_stream = response.bytes_stream();
-        let mut total_bytes_received = 0u64;
-        let mut buffer = Vec::new();
-        let start_time = std::time::Instant::now();
-
-        use futures::StreamExt;
-        while let Some(chunk_result) = bytes_stream.next().await {
-            // Check if session is still active
-            let session_active = {
-                let sessions_lock = sessions.read().await;
-                sessions_lock.contains_key(&session_id)
-            };
-
-            if !session_active {
-                break;
-            }
-
-            match chunk_result {
-                Ok(chunk) => {
-                    let chunk_size = chunk.len() as u64;
-                    total_bytes_received += chunk_size;
-                    buffer.extend_from_slice(&chunk);
-
-                    // Calculate download speed
-                    let elapsed = start_time.elapsed().as_secs_f64();
-                    let speed = if elapsed > 0.0 {
-                        total_bytes_received as f64 / elapsed
-                    } else {
-                        0.0
-                    };
-
-                    // Update session
-                    {
-                        let mut sessions_lock = sessions.write().await;
-                        if let Some(session) = sessions_lock.get_mut(&session_id) {
-                            session.bytes_downloaded = total_bytes_received;
-                            session.download_speed = speed;
-                            
-                            // Calculate buffer health
-                            let buffer_seconds = buffer.len() as f64 / (session.quality.bitrate_bps() as f64 / 8.0);
-                            session.buffer_health = (buffer_seconds / config.min_buffer_seconds as f64).min(1.0) as f32;
-                        }
-                    }
-
-                    let _ = event_sender.send(StreamingEvent::DataReceived { 
-                        session_id, 
-                        bytes: chunk_size 
-                    });
-
-                    // Simulate buffer management
-                    if buffer.len() > config.buffer_size_kb * 1024 {
-                        buffer.drain(0..buffer.len() / 2); // Remove half the buffer
-                    }
-                }
-                Err(e) => {
-                    let error = format!("Streaming error: {}", e);
-                    let _ = event_sender.send(StreamingEvent::SessionError { 
-                        session_id, 
-                        error 
-                    });
-                    break;
-                }
-            }
-        }
-
-        // Mark session as completed
-        {
-            let mut sessions_lock = sessions.write().await;
-            if let Some(session) = sessions_lock.get_mut(&session_id) {
-                session.state = StreamingState::Completed;
-            }
-        }
-
-        let _ = event_sender.send(StreamingEvent::SessionCompleted { session_id });
-        
-        Ok(())
     }
 
     /// Internal helper to send events

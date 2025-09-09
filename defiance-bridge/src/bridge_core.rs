@@ -66,6 +66,7 @@ pub trait BridgeNetwork: Send + Sync {
 pub struct BridgeTransaction {
     pub hash: String,
     pub network: CryptoNetwork,
+    pub chain_id: Option<u64>, // Chain ID for EIP-155 compliance and multi-network support
     pub from_address: String,
     pub to_address: String,
     pub amount: CryptoAmount,

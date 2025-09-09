@@ -9,6 +9,9 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use url::Url;
 use anyhow::Result;
+use std::sync::Arc;
+use tokio::sync::RwLock;
+use defiance_core::network::P2PNetwork;
 
 pub mod augy;
 pub mod player;
@@ -73,7 +76,7 @@ impl Default for AudiogyConfig {
 
 impl AudiogyEngine {
     /// Create new Audigy engine
-    pub async fn new(config: AudiogyConfig) -> Result<Self> {
+    pub async fn new(config: AudiogyConfig, network: Arc<RwLock<P2PNetwork>>) -> Result<Self> {
         tracing::info!("Initializing Audigy engine");
 
         // Ensure cache directory exists
@@ -81,7 +84,7 @@ impl AudiogyEngine {
 
         let player = AudioPlayer::new().await?;
         let discovery = NetworkDiscovery::new(config.network_sources.clone()).await?;
-        let streamer = AudioStreamer::new().await?;
+        let streamer = AudioStreamer::new(network).await?;
 
         Ok(Self {
             player,
@@ -188,13 +191,13 @@ impl AudiogyEngine {
             if content.is_cached && content.local_path.is_some() {
                 // Play from local cache
                 self.player.play_local(content.local_path.as_ref().unwrap()).await?;
-            } else if !content.source_urls.is_empty() {
+            } else {
                 // Stream from network
-                let session_id = self.streamer.start_streaming(&content.source_urls[0]).await?;
+                let session_id = self.streamer.start_streaming(content_id).await?;
                 let session = StreamingSession {
                     id: session_id,
                     content_id,
-                    source_url: content.source_urls[0].clone(),
+                    source_url: "p2p://".parse().unwrap(),
                     started_at: chrono::Utc::now().timestamp(),
                     quality: self.config.preferred_quality.clone(),
                     state: streaming::StreamingState::Initializing,
@@ -205,8 +208,6 @@ impl AudiogyEngine {
                 };
                 self.active_sessions.insert(session_id, session);
                 self.player.play_stream(session_id).await?;
-            } else {
-                return Err(anyhow::anyhow!("No source available for content"));
             }
         } else {
             return Err(anyhow::anyhow!("Content not found"));
@@ -232,31 +233,8 @@ impl AudiogyEngine {
 
     /// Download content for offline use
     pub async fn download(&mut self, content_id: Uuid) -> Result<()> {
-        if let Some(content) = self.content_cache.get_mut(&content_id) {
-            if content.is_cached {
-                return Ok(()); // Already downloaded
-            }
-
-            if !content.source_urls.is_empty() {
-                let url = &content.source_urls[0];
-                let filename = format!("{}.audio", content.id);
-                let local_path = Path::new(&self.config.cache_directory).join(filename);
-
-                // Download the file
-                let response = reqwest::get(url.clone()).await?;
-                let content_bytes = response.bytes().await?;
-                
-                tokio::fs::write(&local_path, content_bytes).await?;
-
-                // Update content info
-                content.local_path = Some(local_path.to_string_lossy().to_string());
-                content.is_cached = true;
-                content.download_progress = 100.0;
-
-                tracing::info!("Downloaded content {} to cache", content_id);
-            }
-        }
-
+        // TODO: Implement P2P download logic
+        tracing::info!("P2P download not yet implemented for content {}", content_id);
         Ok(())
     }
 
@@ -354,18 +332,22 @@ pub struct CacheStats {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use defiance_core::network::P2PNetwork;
+    use std::sync::Arc;
+    use tokio::sync::RwLock;
 
     #[tokio::test]
     async fn test_audigy_engine_creation() {
         let config = AudiogyConfig::default();
-        let engine = AudiogyEngine::new(config).await;
+        let network = Arc::new(RwLock::new(P2PNetwork::new(Uuid::new_v4(), 9999).await.unwrap()));
+        let engine = AudiogyEngine::new(config, network).await;
         assert!(engine.is_ok());
     }
 
     #[test]
     fn test_audio_quality_ordering() {
-        assert_eq!(AudioQuality::Low, AudioQuality::Low);
-        assert_ne!(AudioQuality::Low, AudioQuality::High);
+        assert_eq!(streaming::StreamingQuality::Low, streaming::StreamingQuality::Low);
+        assert_ne!(streaming::StreamingQuality::Low, streaming::StreamingQuality::High);
     }
 
     #[test]

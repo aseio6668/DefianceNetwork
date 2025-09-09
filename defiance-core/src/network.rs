@@ -9,7 +9,7 @@ use libp2p::{
     noise, yamux, tcp,
     request_response::{self, ProtocolSupport},
     identity::Keypair,
-    Swarm, SwarmBuilder
+    Swarm, SwarmBuilder, StreamProtocol
 };
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -73,20 +73,51 @@ pub enum NetworkMessage {
     },
 }
 
+/// Type alias for the request-response Codec
+type DefianceCodec = request_response::cbor::Behaviour<NetworkMessage, NetworkMessage>;
+
 /// Custom network behaviour combining gossipsub, mDNS, and Kademlia DHT
 #[derive(NetworkBehaviour)]
+#[behaviour(to_swarm = "DefianceBehaviourEvent")]
 pub struct DefianceBehaviour {
     pub gossipsub: gossipsub::Behaviour,
     pub mdns: mdns::tokio::Behaviour,
     pub kademlia: kad::Behaviour<kad::store::MemoryStore>,
-    // Note: Request-response temporarily disabled due to libp2p API changes
-    // pub request_response: request_response::Behaviour<DefianceCodec>,
+    pub request_response: DefianceCodec,
 }
 
-/// Custom codec for request-response protocol (temporarily disabled)
-/// TODO: Re-implement when libp2p request-response API stabilizes
-// pub struct DefianceCodec;
-// Implementation temporarily removed due to libp2p API changes
+/// Events emitted by the DefianceBehaviour
+#[derive(Debug)]
+pub enum DefianceBehaviourEvent {
+    Gossipsub(gossipsub::Event),
+    Mdns(mdns::Event),
+    Kademlia(kad::Event),
+    RequestResponse(request_response::Event<NetworkMessage, NetworkMessage>),
+}
+
+impl From<gossipsub::Event> for DefianceBehaviourEvent {
+    fn from(event: gossipsub::Event) -> Self {
+        DefianceBehaviourEvent::Gossipsub(event)
+    }
+}
+
+impl From<mdns::Event> for DefianceBehaviourEvent {
+    fn from(event: mdns::Event) -> Self {
+        DefianceBehaviourEvent::Mdns(event)
+    }
+}
+
+impl From<kad::Event> for DefianceBehaviourEvent {
+    fn from(event: kad::Event) -> Self {
+        DefianceBehaviourEvent::Kademlia(event)
+    }
+}
+
+impl From<request_response::Event<NetworkMessage, NetworkMessage>> for DefianceBehaviourEvent {
+    fn from(event: request_response::Event<NetworkMessage, NetworkMessage>) -> Self {
+        DefianceBehaviourEvent::RequestResponse(event)
+    }
+}
 
 /// P2P Network implementation for DefianceNetwork
 pub struct P2PNetwork {
@@ -116,18 +147,19 @@ pub struct BandwidthTracker {
 }
 
 /// Network events
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub enum NetworkEvent {
     PeerConnected { peer_id: PeerId },
     PeerDisconnected { peer_id: PeerId },
     MessageReceived { from: PeerId, message: NetworkMessage },
     BroadcastReceived { topic: String, message: Vec<u8> },
+    RequestResponseReceived { from: PeerId, message: request_response::Message<NetworkMessage, NetworkMessage> },
 }
 
 impl P2PNetwork {
     /// Create a new P2P network instance
-    pub async fn new(node_id: Uuid, port: u16) -> Result<Self> {
-        tracing::info!("Initializing P2P network on port {}", port);
+    pub async fn new(node_id: Uuid, _port: u16) -> Result<Self> {
+        tracing::info!("Initializing P2P network");
         
         let (event_sender, event_receiver) = mpsc::unbounded_channel();
         
@@ -191,22 +223,22 @@ impl P2PNetwork {
         let store = kad::store::MemoryStore::new(local_peer_id);
         let kademlia = kad::Behaviour::new(local_peer_id, store);
         
-        // Set up request-response - temporarily disabled due to API changes
-        // let protocols = vec![(
-        //     "defiance/req-resp/1.0.0".to_string(),
-        //     ProtocolSupport::Full,
-        // )];
-        // let request_response = request_response::Behaviour::new(
-        //     protocols,
-        //     request_response::Config::default(),
-        // );
+        // Set up request-response
+        let protocols = vec![(
+            StreamProtocol::new("/defiance/req-resp/1.0.0"),
+            ProtocolSupport::Full,
+        )];
+        let request_response = request_response::cbor::Behaviour::new(
+            protocols,
+            request_response::Config::default(),
+        );
         
         // Create the network behaviour
         let behaviour = DefianceBehaviour {
             gossipsub,
             mdns,
             kademlia,
-            // request_response, // Temporarily disabled
+            request_response,
         };
         
         // Create the swarm
@@ -238,7 +270,6 @@ impl P2PNetwork {
     async fn start_event_loop(&mut self) -> Result<()> {
         if let Some(mut swarm) = self.swarm.take() {
             let event_sender = self.event_sender.clone();
-            let peers = Arc::clone(&self.peers);
             
             tokio::spawn(async move {
                 loop {
@@ -247,7 +278,7 @@ impl P2PNetwork {
                             tracing::info!("Listening on {}", address);
                         }
                         SwarmEvent::Behaviour(event) => {
-                            Self::handle_behaviour_event(event, &event_sender, &peers).await;
+                            Self::handle_behaviour_event(event, &event_sender).await;
                         }
                         SwarmEvent::ConnectionEstablished { peer_id, .. } => {
                             tracing::info!("Connected to peer: {}", peer_id);
@@ -268,20 +299,29 @@ impl P2PNetwork {
 
     /// Handle behaviour events
     async fn handle_behaviour_event(
-        event: <DefianceBehaviour as NetworkBehaviour>::ToSwarm,
+        event: DefianceBehaviourEvent,
         event_sender: &mpsc::UnboundedSender<NetworkEvent>,
-        peers: &Arc<RwLock<HashMap<PeerId, PeerInfo>>>,
     ) {
         match event {
-            // Handle behaviour-generated events
             DefianceBehaviourEvent::Gossipsub(gossip_event) => {
-                tracing::debug!("Gossipsub event: {:?}", gossip_event);
+                if let gossipsub::Event::Message { message, .. } = gossip_event {
+                     let _ = event_sender.send(NetworkEvent::BroadcastReceived { topic: message.topic.into_string(), message: message.data });
+                }
             }
             DefianceBehaviourEvent::Mdns(mdns_event) => {
-                tracing::debug!("mDNS event: {:?}", mdns_event);
+                if let mdns::Event::Discovered(list) = mdns_event {
+                    for (peer_id, _multiaddr) in list {
+                        tracing::info!("mDNS discovered a new peer: {}", peer_id);
+                    }
+                }
             }
             DefianceBehaviourEvent::Kademlia(kad_event) => {
                 tracing::debug!("Kademlia event: {:?}", kad_event);
+            }
+            DefianceBehaviourEvent::RequestResponse(rr_event) => {
+                if let request_response::Event::Message { peer, message } = rr_event {
+                    let _ = event_sender.send(NetworkEvent::RequestResponseReceived { from: peer, message });
+                }
             }
         }
     }
@@ -299,10 +339,13 @@ impl P2PNetwork {
     }
 
     /// Send a direct message to a specific peer
-    pub async fn send_to_peer(&mut self, _peer_id: PeerId, _message: NetworkMessage) -> Result<()> {
-        // TODO: Re-implement when request-response is re-enabled
-        tracing::warn!("Direct peer messaging temporarily disabled due to libp2p API changes");
-        Ok(())
+    pub async fn send_to_peer(&mut self, peer_id: PeerId, message: NetworkMessage) -> Result<()> {
+        if let Some(swarm) = &mut self.swarm {
+           swarm.behaviour_mut().request_response.send_request(&peer_id, message);
+           Ok(())
+        } else {
+            Err(anyhow::anyhow!("Swarm not initialized"))
+        }
     }
 
     /// Get the number of connected peers

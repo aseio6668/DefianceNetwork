@@ -27,6 +27,7 @@ pub struct ArceonBlock {
 pub struct ArceonTransaction {
     pub hash: String,
     pub version: u32,
+    pub chain_id: Option<u64>, // Chain ID for multi-network support
     pub inputs: Vec<ArceonInput>,
     pub outputs: Vec<ArceonOutput>,
     pub lock_time: u32,
@@ -297,6 +298,7 @@ impl ArceonTransaction {
         crate::bridge_core::BridgeTransaction {
             hash: self.hash.clone(),
             network: CryptoNetwork::Arceon,
+            chain_id: self.chain_id.or(CryptoNetwork::Arceon.chain_id()),
             from_address: self.get_input_addresses().join(","),
             to_address: self.get_output_addresses().join(","),
             amount: CryptoAmount::new(CryptoNetwork::Arceon, total_output_value, 8),
@@ -452,6 +454,7 @@ mod tests {
         let tx = ArceonTransaction {
             hash: "test_hash".to_string(),
             version: 1,
+            chain_id: Some(9081),
             inputs: vec![],
             outputs: vec![],
             lock_time: 0,

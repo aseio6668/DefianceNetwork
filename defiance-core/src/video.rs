@@ -1,5 +1,8 @@
 //! Video streaming and processing engine
 
+use crate::streaming::StreamingEngine;
+use ffmpeg_next as ffmpeg;
+use ffmpeg_next::{format, codec, util::frame, software::scaling, Rational};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::{RwLock, mpsc};
@@ -12,9 +15,12 @@ use crate::user::User;
 
 /// Video streaming engine for handling live streams and video content
 pub struct VideoEngine {
+    streaming_engine: Arc<RwLock<StreamingEngine>>,
     active_streams: Arc<RwLock<HashMap<Uuid, VideoStream>>>,
     broadcast_sessions: Arc<RwLock<HashMap<Uuid, BroadcastSession>>>,
     viewer_sessions: Arc<RwLock<HashMap<Uuid, ViewerSession>>>,
+    encoders: Arc<RwLock<HashMap<Uuid, ffmpeg::encoder::Video>>>,
+    decoders: Arc<RwLock<HashMap<Uuid, ffmpeg::decoder::video::Video>>>,
     event_sender: mpsc::UnboundedSender<VideoEvent>,
     event_receiver: Option<mpsc::UnboundedReceiver<VideoEvent>>,
     config: VideoEngineConfig,
@@ -192,13 +198,18 @@ impl Default for VideoEngineConfig {
 
 impl VideoEngine {
     /// Create new video engine
-    pub async fn new(config: VideoEngineConfig) -> Result<Self> {
+    pub async fn new(streaming_engine: Arc<RwLock<StreamingEngine>>, config: VideoEngineConfig) -> Result<Self> {
         let (event_sender, event_receiver) = mpsc::unbounded_channel();
         
+        ffmpeg::init().unwrap();
+        
         Ok(Self {
+            streaming_engine,
             active_streams: Arc::new(RwLock::new(HashMap::new())),
             broadcast_sessions: Arc::new(RwLock::new(HashMap::new())),
             viewer_sessions: Arc::new(RwLock::new(HashMap::new())),
+            encoders: Arc::new(RwLock::new(HashMap::new())),
+            decoders: Arc::new(RwLock::new(HashMap::new())),
             event_sender,
             event_receiver: Some(event_receiver),
             config,
@@ -321,6 +332,23 @@ impl VideoEngine {
 
         stream.state = StreamState::Live;
         
+        // Initialize the encoder
+        let codec = codec::encoder::find(codec::Id::H264).ok_or(DefianceError::Streaming("H.264 codec not found".to_string()))?;
+        let mut encoder = codec::context::Context::new().encoder().video()?;
+        
+        encoder.set_width(stream.resolution.width);
+        encoder.set_height(stream.resolution.height);
+        encoder.set_bit_rate(stream.bitrate as usize);
+        encoder.set_frame_rate(Some(Rational::new(stream.framerate as i32, 1)));
+        encoder.set_format(format::Pixel::YUV420P);
+        
+        let encoder = encoder.open_as(codec)?;
+        
+        {
+            let mut encoders = self.encoders.write().await;
+            encoders.insert(stream_id, encoder);
+        }
+        
         // Update stream
         {
             let mut streams = self.active_streams.write().await;
@@ -341,15 +369,17 @@ impl VideoEngine {
         self.send_event(VideoEvent::StreamStarted { stream_id }).await;
         tracing::info!("Started streaming for stream {}", stream_id);
         
-        // TODO: Initialize video encoding pipeline
-        // TODO: Start accepting video frames
-        // TODO: Setup streaming endpoints
-        
         Ok(())
     }
 
     /// Stop a stream
     pub async fn stop_stream(&mut self, stream_id: Uuid) -> Result<()> {
+        // Remove encoder
+        {
+            let mut encoders = self.encoders.write().await;
+            encoders.remove(&stream_id);
+        }
+        
         // Update stream state
         {
             let mut streams = self.active_streams.write().await;
@@ -393,27 +423,31 @@ impl VideoEngine {
         let session_id = Uuid::new_v4();
 
         // Check if stream exists and is live
-        let stream_exists = {
+        let stream = {
             let streams = self.active_streams.read().await;
-            streams.get(&stream_id)
-                .map(|s| s.state == StreamState::Live)
-                .unwrap_or(false)
+            streams.get(&stream_id).cloned()
         };
-
-        if !stream_exists {
+        
+        let stream = stream.ok_or_else(|| DefianceError::Streaming("Stream not found".to_string()))?;
+        
+        if stream.state != StreamState::Live {
             return Err(DefianceError::Streaming("Stream not available".to_string()).into());
         }
 
         // Check viewer limit
-        {
-            let streams = self.active_streams.read().await;
-            if let Some(stream) = streams.get(&stream_id) {
-                if let Some(max_viewers) = stream.max_viewers {
-                    if stream.current_viewers.len() >= max_viewers {
-                        return Err(DefianceError::Streaming("Stream at maximum capacity".to_string()).into());
-                    }
-                }
+        if let Some(max_viewers) = stream.max_viewers {
+            if stream.current_viewers.len() >= max_viewers {
+                return Err(DefianceError::Streaming("Stream at maximum capacity".to_string()).into());
             }
+        }
+        
+        // Initialize the decoder
+        let codec = codec::decoder::find(codec::Id::H264).ok_or(DefianceError::Streaming("H.264 codec not found".to_string()))?;
+        let mut decoder = codec::context::Context::new().decoder().video()?;
+        
+        {
+            let mut decoders = self.decoders.write().await;
+            decoders.insert(session_id, decoder);
         }
 
         // Create viewer session
@@ -521,27 +555,46 @@ impl VideoEngine {
         Ok(())
     }
 
-    /// Process video frame for broadcasting
+    /// Process a raw video frame for broadcasting.
+    /// The frame_data is expected to be in a format that can be wrapped by a `ffmpeg::util::frame::Video`.
     pub async fn process_frame(
         &mut self,
         stream_id: Uuid,
-        frame_data: Vec<u8>,
-        timestamp: u64,
+        frame: &frame::Video,
     ) -> Result<()> {
-        // TODO: Encode frame using selected codec
-        // TODO: Generate multiple quality levels
-        // TODO: Distribute to connected viewers
-        // TODO: Update stream statistics
+        let mut encoders = self.encoders.write().await;
+        if let Some(encoder) = encoders.get_mut(&stream_id) {
+            let mut packet = ffmpeg::Packet::empty();
+            encoder.send_frame(frame)?;
+            while encoder.receive_packet(&mut packet).is_ok() {
+                let mut streaming_engine = self.streaming_engine.write().await;
+                streaming_engine.process_video_packet(stream_id, packet.data().unwrap().to_vec(), packet.pts().map(|pts| pts as u64)).await?;
+            }
+        }
 
         // Update frame statistics
         {
             let mut streams = self.active_streams.write().await;
             if let Some(stream) = streams.get_mut(&stream_id) {
                 // TODO: Update encoding stats
-                stream.stats.total_data_sent += frame_data.len() as u64;
+                stream.stats.total_data_sent += frame.data(0).len() as u64;
             }
         }
 
+        Ok(())
+    }
+
+    /// Process an encoded video packet for a viewer.
+    pub async fn process_packet(&mut self, session_id: Uuid, packet_data: &[u8]) -> Result<()> {
+        let mut decoders = self.decoders.write().await;
+        if let Some(decoder) = decoders.get_mut(&session_id) {
+            let packet = ffmpeg::Packet::copy(packet_data);
+            let mut frame = frame::Video::empty();
+            decoder.send_packet(&packet)?;
+            while decoder.receive_frame(&mut frame).is_ok() {
+                println!("Decoded frame with dimensions {}x{}", frame.width(), frame.height());
+            }
+        }
         Ok(())
     }
 

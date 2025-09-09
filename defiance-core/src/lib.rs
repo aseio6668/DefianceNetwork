@@ -4,6 +4,8 @@
 //! This crate provides the fundamental networking, streaming, and data structures
 //! needed for the decentralized streaming platform.
 
+use defiance_discovery::PeerDiscovery;
+use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use serde::{Deserialize, Serialize};
@@ -23,7 +25,7 @@ pub mod broadcast;
 
 // Re-export commonly used types
 pub use error::DefianceError;
-pub use network::{P2PNetwork, NetworkMessage};
+pub use network::{P2PNetwork, NetworkMessage, PeerInfo};
 pub use streaming::{StreamingEngine, BroadcastSession, ViewingSession};
 pub use video::{VideoEngine, VideoStream, VideoQuality, VideoResolution};
 pub use user::{User, Username, UserManager};
@@ -83,6 +85,8 @@ pub struct DefianceNode {
     pub crypto: Arc<crypto::CryptoManager>,
     pub monitor: Arc<RwLock<monitoring::NetworkMonitor>>,
     pub broadcast_manager: Arc<RwLock<broadcast::BroadcastManager>>,
+    pub active_broadcasts: Arc<RwLock<HashMap<Uuid, BroadcastSession>>>,
+    pub peer_discovery: Arc<RwLock<PeerDiscovery>>,
     pub bridge: Option<Arc<defiance_bridge::BridgeManager>>,
 }
 
@@ -90,6 +94,9 @@ impl DefianceNode {
     /// Create a new DefianceNetwork node
     pub async fn new(config: NodeConfig) -> Result<Self> {
         tracing::info!("Initializing DefianceNetwork node {}", config.node_id);
+
+        // Ensure data directory exists
+        tokio::fs::create_dir_all(&config.data_dir).await?;
 
         // Initialize storage
         let storage = Arc::new(RwLock::new(
@@ -120,7 +127,7 @@ impl DefianceNode {
 
         // Initialize video engine
         let video = Arc::new(RwLock::new(
-            video::VideoEngine::new(video::VideoEngineConfig::default()).await?
+            video::VideoEngine::new(streaming.clone(), video::VideoEngineConfig::default()).await?
         ));
 
         // Initialize network monitor
@@ -131,6 +138,11 @@ impl DefianceNode {
         // Initialize broadcast manager
         let broadcast_manager = Arc::new(RwLock::new(
             broadcast::BroadcastManager::new(config.node_id, (*crypto).clone())
+        ));
+
+        // Initialize peer discovery
+        let peer_discovery = Arc::new(RwLock::new(
+            PeerDiscovery::new().with_github_repo(config.discovery_github_repo.clone().unwrap_or_default())
         ));
 
         // Initialize bridge (optional)
@@ -151,6 +163,8 @@ impl DefianceNode {
             crypto,
             monitor,
             broadcast_manager,
+            active_broadcasts: Arc::new(RwLock::new(HashMap::new())),
+            peer_discovery,
             bridge,
         })
     }
@@ -187,6 +201,12 @@ impl DefianceNode {
         {
             let mut monitor = self.monitor.write().await;
             monitor.start().await?;
+        }
+
+        // Start peer discovery
+        {
+            let mut peer_discovery = self.peer_discovery.write().await;
+            peer_discovery.start().await?;
         }
 
         tracing::info!("DefianceNetwork node started successfully");
@@ -243,9 +263,9 @@ impl DefianceNode {
     }
 
     /// Join a viewing session
-    pub async fn join_viewing_session(&self, content_id: Uuid) -> Result<Uuid> {
+    pub async fn join_viewing_session(&self, content_id: Uuid, viewer_peer_id: libp2p::PeerId) -> Result<Uuid> {
         let mut streaming = self.streaming.write().await;
-        streaming.join_viewing_session(content_id).await
+        streaming.join_viewing_session(content_id, viewer_peer_id).await
             .map_err(|e| anyhow::anyhow!("Failed to join viewing session: {}", e))
     }
 

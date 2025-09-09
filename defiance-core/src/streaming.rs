@@ -6,10 +6,11 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use crate::error::{DefianceError, Result};
-use crate::network::P2PNetwork;
+use crate::network::{P2PNetwork, NetworkMessage};
 use crate::storage::DefianceStorage;
 use crate::crypto::CryptoManager;
 use crate::content::{Content, ContentType, ContentChunk, Quality};
+use libp2p::PeerId;
 
 /// Streaming engine managing broadcasts and viewing sessions
 pub struct StreamingEngine {
@@ -26,7 +27,7 @@ pub struct BroadcastSession {
     pub id: Uuid,
     pub content: Content,
     pub started_at: i64,
-    pub viewers: Vec<Uuid>,
+    pub viewers: HashMap<Uuid, PeerId>, // Map user ID to network PeerId
     pub max_viewers: Option<usize>,
     pub is_live: bool,
     pub quality_levels: Vec<Quality>,
@@ -109,16 +110,16 @@ impl StreamingEngine {
         let creator_id = Uuid::new_v4(); // TODO: Get from user manager
         
         let content = if content_type == ContentType::LiveStream {
-            Content::new_live_stream(title, description, "Anonymous".to_string(), creator_id)
+            Content::new_live_stream(title.clone(), description.clone(), "Anonymous".to_string(), creator_id)
         } else {
-            Content::new(title, description, content_type, "Anonymous".to_string(), creator_id)
+            Content::new(title.clone(), description.clone(), content_type.clone(), "Anonymous".to_string(), creator_id)
         };
         
         let broadcast = BroadcastSession {
             id: broadcast_id,
             content,
             started_at: chrono::Utc::now().timestamp(),
-            viewers: Vec::new(),
+            viewers: HashMap::new(),
             max_viewers: None,
             is_live: true,
             quality_levels: vec![Quality::Source, Quality::High, Quality::Medium],
@@ -132,7 +133,18 @@ impl StreamingEngine {
         }
         
         // Announce broadcast to network
-        // TODO: Implement network announcement
+        let announcement = NetworkMessage::BroadcastAnnouncement {
+            broadcast_id,
+            title,
+            description,
+            content_type: format!("{:?}", content_type),
+            broadcaster: "Anonymous".to_string(),
+        };
+        
+        {
+            let mut network = self.network.write().await;
+            network.broadcast(announcement).await?;
+        }
         
         self.active_broadcasts.insert(broadcast_id, broadcast);
         
@@ -160,7 +172,7 @@ impl StreamingEngine {
     }
     
     /// Join a viewing session
-    pub async fn join_viewing_session(&mut self, content_id: Uuid) -> Result<Uuid> {
+    pub async fn join_viewing_session(&mut self, content_id: Uuid, viewer_peer_id: PeerId) -> Result<Uuid> {
         let session_id = Uuid::new_v4();
         let user_id = Uuid::new_v4(); // TODO: Get from user manager
         
@@ -177,7 +189,7 @@ impl StreamingEngine {
         
         // Check if this is a live broadcast and add viewer
         if let Some(broadcast) = self.active_broadcasts.get_mut(&content_id) {
-            broadcast.viewers.push(user_id);
+            broadcast.viewers.insert(user_id, viewer_peer_id);
             broadcast.content.metadata.increment_viewers();
         }
         
@@ -199,26 +211,70 @@ impl StreamingEngine {
     }
     
     /// Internal viewing session stopping logic
-    async fn stop_viewing_session_internal(&self, session: &mut ViewingSession) -> Result<()> {
+    async fn stop_viewing_session_internal(&mut self, session: &mut ViewingSession) -> Result<()> {
         // Remove viewer from broadcast if it's live
-        // TODO: Implement viewer removal from live broadcasts
+        if let Some(broadcast) = self.active_broadcasts.get_mut(&session.content_id) {
+            broadcast.viewers.remove(&session.user_id);
+        }
         
         Ok(())
     }
     
-    /// Add content chunk to a broadcast
+    /// Add content chunk to a broadcast and distribute it to viewers.
     pub async fn add_broadcast_chunk(
         &mut self,
         broadcast_id: Uuid,
         chunk: ContentChunk,
     ) -> Result<()> {
         if let Some(broadcast) = self.active_broadcasts.get_mut(&broadcast_id) {
-            broadcast.content.add_chunk(chunk)?;
+            let chunk_id = broadcast.current_chunk;
+            broadcast.content.add_chunk(chunk.clone())?;
             broadcast.current_chunk += 1;
-            
-            // TODO: Distribute chunk to viewers
+
+            // Encrypt and prepare the chunk for sending
+            let encrypted_data = (*self.crypto).encrypt(&chunk.data)?;
+            let checksum = blake3::hash(&encrypted_data).into();
+
+            let message = NetworkMessage::StreamChunk {
+                content_id: broadcast.content.metadata.id,
+                chunk_id,
+                data: encrypted_data,
+                checksum,
+            };
+
+            // Distribute chunk to all viewers
+            let mut network = self.network.write().await;
+            for peer_id in broadcast.viewers.values() {
+                if let Err(e) = network.send_to_peer(*peer_id, message.clone()).await {
+                    tracing::warn!("Failed to send chunk to peer {}: {}", peer_id, e);
+                }
+            }
             
             Ok(())
+        } else {
+            Err(DefianceError::Streaming("Broadcast not found".to_string()))
+        }
+    }
+
+    /// Process an encoded video packet, wrap it in a ContentChunk, and distribute it.
+    pub async fn process_video_packet(
+        &mut self,
+        broadcast_id: Uuid,
+        packet_data: Vec<u8>,
+        timestamp: Option<u64>,
+    ) -> Result<()> {
+        if let Some(broadcast) = self.active_broadcasts.get(&broadcast_id) {
+            let checksum = blake3::hash(&packet_data).into();
+            let chunk = ContentChunk {
+                content_id: broadcast.content.metadata.id,
+                chunk_id: broadcast.current_chunk,
+                data: packet_data,
+                checksum,
+                quality: Quality::Source, // Assuming source quality for now
+                timestamp,
+            };
+            
+            self.add_broadcast_chunk(broadcast_id, chunk).await
         } else {
             Err(DefianceError::Streaming("Broadcast not found".to_string()))
         }
@@ -321,7 +377,8 @@ mod tests {
         let mut engine = create_test_engine().await;
         
         let content_id = Uuid::new_v4();
-        let session_id = engine.join_viewing_session(content_id).await.unwrap();
+        let peer_id = PeerId::random();
+        let session_id = engine.join_viewing_session(content_id, peer_id).await.unwrap();
         
         assert_eq!(engine.get_active_viewer_count(), 1);
         
